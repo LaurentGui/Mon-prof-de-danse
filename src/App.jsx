@@ -14,17 +14,32 @@ import React from 'react';
     // Configuration Supabase
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    // Vérification des variables d'environnement
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error(
+        "Veuillez définir les variables d'environnement VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY dans votre fichier .env."
+      );
+    }
+
     export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
     function App() {
       const [session, setSession] = useState(null);
       const [loading, setLoading] = useState(true);
+      const [supabaseError, setSupabaseError] = useState(null);
 
       useEffect(() => {
         const fetchSession = async () => {
-          const { data: { session } } = await supabase.auth.getSession();
-          setSession(session);
-          setLoading(false);
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+            setSession(session);
+          } catch (error) {
+            console.error("Erreur lors de la récupération de la session:", error);
+            setSupabaseError("Erreur lors de la connexion à Supabase.");
+          } finally {
+            setLoading(false);
+          }
         };
         fetchSession();
 
@@ -39,6 +54,10 @@ import React from 'react';
 
       if (loading) {
         return <div>Chargement...</div>;
+      }
+
+      if (supabaseError) {
+        return <div>Erreur: {supabaseError}</div>;
       }
 
       return (
